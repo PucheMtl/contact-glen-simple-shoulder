@@ -68,13 +68,22 @@ Main = {
       };
       
       
-      // Define a cylinder representing the center of humeral head. The supraspinatus and deltoid muscles        
-      // will wrap about this cylinder.
+      // Define a sphere representing the center of humeral head. The supraspinatus and deltoid muscles        
+      // will wrap about this sphere.
       AnyRefNode SurfCenter = {
-        sRel = {0,0.2, -0.05};
-        AnySurfCylinder HHcenter = {
+        sRel = {0,0.2, 0};
+        
+        //        AnySurfCylinder HHcenter = {
+        //          Radius = 0.03;
+        //          Length = 0.1;
+        //          AnyDrawParamSurf drw = {
+        //            RGB = {0, 0, 1};
+        //          };
+        //        };
+        
+        AnySurfSphere HumerusHead = 
+        {
           Radius = 0.03;
-          Length = 0.1;
           AnyDrawParamSurf drw = {
             RGB = {0, 0, 1};
           };
@@ -91,7 +100,7 @@ Main = {
           F0 = 200;
         };
         AnyRefFrame &org = Main.MyModel.Humerus.DeltoidOrg;
-        AnyParamSurf &wrap = Main.MyModel.Humerus.SurfCenter.HHcenter;
+        AnyParamSurf &wrap = Main.MyModel.Humerus.SurfCenter.HumerusHead;
         AnyRefFrame &ins = Main.MyModel.GlobalRef.DeltoidIns;
         SPLine = {
           StringMesh = 50;
@@ -108,7 +117,7 @@ Main = {
           F0 = 200;
         };
         AnyRefFrame &org = Main.MyModel.Humerus.SupraOrg;
-        AnyParamSurf &wrap = Main.MyModel.Humerus.SurfCenter.HHcenter;
+        AnyParamSurf &wrap = Main.MyModel.Humerus.SurfCenter.HumerusHead;
         AnyRefFrame &ins = Main.MyModel.GlobalRef.SupraIns;
         SPLine = {
           StringMesh = 50;
