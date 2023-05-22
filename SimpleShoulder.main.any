@@ -9,32 +9,59 @@ Main = {
     AnyFixedRefFrame GlobalRef = {
       
       // Todo: Add points for grounding of the model here
-      //Definitions of muscles insertions
-      AnyRefNode GlenCenter = {
-        sRel = {0.194,0.415, 0};
-        AnyDrawRefFrame drw = {};
-      };
-      
-      AnyRefNode DeltoidIns = {
-        sRel = {0.194, 0.460, 0.0};
-        AnyDrawNode drw = {
-          Opacity = 0.5;
-        };
-      };           
-      
-      AnyRefNode SupraIns = {
-        sRel = {0.079, 0.434, 0.0};
-        AnyDrawNode drw = {
-          Opacity = 0.5;
-        };
-      };            
-      
+      //Definitions of muscles insertions  
       
     };
     
     // Todo: Add the model elements such as
     //       segments, joints, and muscles here.
     
+    //Definition of the glenoid fossea
+    AnySeg Glenoid = 
+    {
+      r0 = {0.194, 0.415, 0.0}; // similaire au centre HH 
+      Mass = 0;
+      Jii = {0.0, 0.0, 0.0};
+      //      AnyDrawSeg drw = {};
+      
+      AnyRefNode GlenoidCenter = 
+      {
+        sRel = {0.0, 0.0, 0.0};
+        //ARel = {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}};
+      };
+
+      
+      //Define a sphere that represent the glenoid fossa. Contact constraint will be define between 
+      // the sphere and the sphere representing the humeral head. 
+      AnyRefNode FossaCenter = {
+        sRel = {0.01,0,0};
+        AnySurfSphere GlenoidFossa = 
+        {
+          Radius = 0.04;
+          AnyDrawParamSurf drw = {
+            RGB = {0, 0.6, 0.6};
+            Opacity = 0.5;   
+          };
+        };
+      };
+      
+      //Muscles insertions
+      AnyRefNode DeltoidIns = {
+        sRel = {0.0, 0.045, 0.0};
+        AnyDrawNode drw = {
+          Opacity = 0.5;
+        };
+      };           
+      
+      AnyRefNode SupraIns = {
+        sRel = {-0.115, 0.019, 0.0};
+        AnyDrawNode drw = {
+          Opacity = 0.5;
+        };
+      };  
+      
+      
+    }; // end of glenoid fossa
     
     //Definition of the humerus segment 
     AnySeg Humerus = 
@@ -73,19 +100,13 @@ Main = {
       AnyRefNode SurfCenter = {
         sRel = {0,0.2, 0};
         
-        //        AnySurfCylinder HHcenter = {
-        //          Radius = 0.03;
-        //          Length = 0.1;
-        //          AnyDrawParamSurf drw = {
-        //            RGB = {0, 0, 1};
-        //          };
-        //        };
-        
         AnySurfSphere HumerusHead = 
         {
           Radius = 0.03;
           AnyDrawParamSurf drw = {
             RGB = {0, 0, 1};
+            Opacity = 0.5;
+            
           };
         };
       };
@@ -101,7 +122,7 @@ Main = {
         };
         AnyRefFrame &org = Main.MyModel.Humerus.DeltoidOrg;
         AnyParamSurf &wrap = Main.MyModel.Humerus.SurfCenter.HumerusHead;
-        AnyRefFrame &ins = Main.MyModel.GlobalRef.DeltoidIns;
+        AnyRefFrame &ins = Main.MyModel.Glenoid.DeltoidIns;
         SPLine = {
           StringMesh = 50;
         };
@@ -118,7 +139,7 @@ Main = {
         };
         AnyRefFrame &org = Main.MyModel.Humerus.SupraOrg;
         AnyParamSurf &wrap = Main.MyModel.Humerus.SurfCenter.HumerusHead;
-        AnyRefFrame &ins = Main.MyModel.GlobalRef.SupraIns;
+        AnyRefFrame &ins = Main.MyModel.Glenoid.SupraIns;
         SPLine = {
           StringMesh = 50;
         };
@@ -131,10 +152,24 @@ Main = {
       
     }; // end of muscle 
     
+    //    Definition of the scapulo thoracic joint. No shoulder rythme.
+    AnyRevoluteJoint STJoint = 
+    {
+      AnyRefFrame &ground = Main.MyModel.GlobalRef;
+      AnyRefFrame &Glen = Main.MyModel.Glenoid;
+    };
+    AnyKinEqSimpleDriver STdriver = 
+    {
+      AnyRevoluteJoint &ST = Main.MyModel.STJoint;
+            DriverVel = {0};
+          };
+
+    
+    
     //Definition of the GH joint
     AnyRevoluteJoint GHJoint = 
     {
-      AnyRefFrame &Glen = Main.MyModel.GlobalRef.GlenCenter;
+      AnyRefFrame &Glen = Main.MyModel.Glenoid.GlenoidCenter;
       AnyRefFrame &Humerus = Main.MyModel.Humerus.HHCenter;
       
       // Prepare the joint for FDK: Define the reaction types in y
@@ -148,7 +183,7 @@ Main = {
       
     };
     
-    // Define springs in the shoulder, simulating the effect of passive elements
+    //     Define springs in the shoulder, simulating the effect of passive elements
     AnyForce ShoulderPE = {
       AnyKinLinear &lin = Main.MyModel.GHJoint.Linear;
       //      F = {0, -10000*lin.Pos[0], 0};
@@ -166,14 +201,15 @@ Main = {
   }; // end of my model 
   
   ////   The study: Operations to be performed on the model
-  AnyBodyStudy MyStudy = {
-    AnyFolder &Model = .MyModel;
-    Gravity = {0.0, -9.81, 0.0};
-    tStart = 0;
-    tEnd = 1;
-    nStep = 101;
-    InverseDynamics.ForceDepKinOnOff=On;
-  };
+    AnyBodyStudy MyStudy = {
+      AnyFolder &Model = .MyModel;
+      Gravity = {0.0, -9.81, 0.0};
+      tStart = 0;
+      tEnd = 1;
+      nStep = 101;
+      InverseDynamics.ForceDepKinOnOff=On;
+    };
   
 };
+
 
