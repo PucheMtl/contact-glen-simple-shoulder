@@ -1,0 +1,170 @@
+// Todo: Write a small description of your model here
+
+Main = {
+  
+  // The actual body model goes in this folder
+  AnyFolder MyModel = {
+    
+    // Global Reference Frame
+    AnyFixedRefFrame GlobalRef = {
+      
+      // Todo: Add points for grounding of the model here
+      //Definitions of muscles insertions
+      AnyRefNode GlenCenter = {
+        sRel = {0.194,0.415, 0};
+        AnyDrawRefFrame drw = {};
+      };
+      
+      AnyRefNode DeltoidIns = {
+        sRel = {0.194, 0.460, 0.0};
+        AnyDrawNode drw = {
+          Opacity = 0.5;
+        };
+      };           
+      
+      AnyRefNode SupraIns = {
+        sRel = {0.079, 0.434, 0.0};
+        AnyDrawNode drw = {
+          Opacity = 0.5;
+        };
+      };            
+      
+      
+    };
+    
+    // Todo: Add the model elements such as
+    //       segments, joints, and muscles here.
+    
+    
+    //Definition of the humerus segment 
+    AnySeg Humerus = 
+    {
+      r0 = {0.194, 0.215, 0.0};
+      Mass = 2.1;
+      Jii = {0.021, 0, 0.021};
+      AnyDrawSeg drw = {};
+      
+      AnyRefNode HumerusCG = {
+        AnyDrawRefFrame drw = {};
+      };
+      
+      AnyRefNode HHCenter = {
+        sRel = {0,0.2, 0};
+        AnyDrawRefFrame drw = {};
+      };
+      
+      //Muscle Origine
+      AnyRefNode DeltoidOrg = {
+        sRel = {0.005, 0.045, 0.0};
+        AnyDrawNode drw = {
+          Opacity = 0.5;
+        };
+      }; 
+      AnyRefNode SupraOrg = {
+        sRel = {0.03, 0.21, 0.0};
+        AnyDrawNode drw = {
+          Opacity = 0.5;
+        };
+      };
+      
+      
+      // Define a cylinder representing the center of humeral head. The supraspinatus and deltoid muscles        
+      // will wrap about this cylinder.
+      AnyRefNode SurfCenter = {
+        sRel = {0,0.2, -0.05};
+        AnySurfCylinder HHcenter = {
+          Radius = 0.03;
+          Length = 0.1;
+          AnyDrawParamSurf drw = {
+            RGB = {0, 0, 1};
+          };
+        };
+      };
+      
+    };// end of humerus
+    
+    //Muscles
+    AnyFolder Muscle = {  
+      
+      AnyMuscleShortestPath Deltoid = {
+        AnyMuscleModel MuscleModel = {
+          F0 = 200;
+        };
+        AnyRefFrame &org = Main.MyModel.Humerus.DeltoidOrg;
+        AnyParamSurf &wrap = Main.MyModel.Humerus.SurfCenter.HHcenter;
+        AnyRefFrame &ins = Main.MyModel.GlobalRef.DeltoidIns;
+        SPLine = {
+          StringMesh = 50;
+        };
+        AnyDrawMuscle drw = {
+          RGB = {0.7, 0, 0};
+          Opacity = 0.5;
+          
+        };    
+      };
+      
+      AnyMuscleShortestPath Supra = {
+        AnyMuscleModel MuscleModel = {
+          F0 = 200;
+        };
+        AnyRefFrame &org = Main.MyModel.Humerus.SupraOrg;
+        AnyParamSurf &wrap = Main.MyModel.Humerus.SurfCenter.HHcenter;
+        AnyRefFrame &ins = Main.MyModel.GlobalRef.SupraIns;
+        SPLine = {
+          StringMesh = 50;
+        };
+        AnyDrawMuscle drw = {
+          RGB = {0.7, 0, 0};
+          Opacity = 0.5;
+          
+        };    
+      };
+      
+    }; // end of muscle 
+    
+    //Definition of the GH joint
+    AnyRevoluteJoint GHJoint = 
+    {
+      AnyRefFrame &Glen = Main.MyModel.GlobalRef.GlenCenter;
+      AnyRefFrame &Humerus = Main.MyModel.Humerus.HHCenter;
+      
+      // Prepare the joint for FDK: Define the reaction types in y
+      // directions to be FDK-dependent. These reaction forces must then
+      // be switched off and provided by some elastic element that we
+      // define explicitly below.
+      Constraints = {
+        CType = {Hard, ForceDep, Hard, Hard, Hard};
+        Reaction.Type={On,Off,On,On,On};
+      };
+      
+    };
+    
+    // Define springs in the shoulder, simulating the effect of passive elements
+    AnyForce ShoulderPE = {
+      AnyKinLinear &lin = Main.MyModel.GHJoint.Linear;
+      //      F = {0, -10000*lin.Pos[0], 0};
+      F = {0, iffun(gtfun(0, lin.Pos[1]), -10000*lin.Pos[1],0.0), 0};
+    };
+    
+    // Shoulder driver- abduction.
+    AnyKinEqSimpleDriver ShoulderDriver = {
+      DriverPos = {0};
+      DriverVel = {pi/2};
+      AnyRevoluteJoint &ShoulderJoint = Main.MyModel.GHJoint;
+      Reaction.Type={Off}; // The muscles must carry this movement
+    };
+    
+  }; // end of my model 
+  
+  ////   The study: Operations to be performed on the model
+  AnyBodyStudy MyStudy = {
+    AnyFolder &Model = .MyModel;
+    Gravity = {0.0, -9.81, 0.0};
+    tStart = 0;
+    tEnd = 1;
+    nStep = 101;
+    InverseDynamics.ForceDepKinOnOff=On;
+  };
+  
+};
+
