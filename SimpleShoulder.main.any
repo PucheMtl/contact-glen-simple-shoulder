@@ -11,11 +11,25 @@ Main = {
     // Global Reference Frame
     AnyFixedRefFrame GlobalRef = {
       
+      AnyRefNode STcenter = 
+      {
+        sRel = {0.194, 0.415, 0.0};
+        //ARel = {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}};
+      };
+
+      
+         AnyRefNode SpringAnchor = {
+        sRel = {0.194, 0.215, 0.0}; // similaire au Humerus CG en position initiale
+       AnyDrawNode drw = {
+         RGB = {0,1,0};
+        };
+
+      }; 
+      
+      
       // Todo: Add points for grounding of the model here
       //Definitions of muscles insertions  
-      AnyRefNode SpringAnchor = {
-        sRel = {0.194, 0.215, 0.0};
-      };
+     
     };
     
     
@@ -26,7 +40,7 @@ Main = {
       r0 = {0.194, 0.415, 0.0}; // similaire au centre HH 
       Mass = 0;
       Jii = {0.0, 0.0, 0.0};
-      //      AnyDrawSeg drw = {};
+//      AnyDrawSeg drw = {};
       
       //Define a sphere that represent the glenoid fossa. Contact constraint will be define between 
       // the sphere and the sphere representing the humeral head. 
@@ -42,7 +56,7 @@ Main = {
         };
       };
       
-      //Muscles insertions
+            //Muscles insertions
       AnyRefNode DeltoidIns = {
         sRel = {0.0, 0.045, 0.0};
         AnyDrawNode drw = {
@@ -55,7 +69,7 @@ Main = {
         AnyDrawNode drw = {
           Opacity = 0.5;
         };
-      };  
+      }; 
       
       
     }; // end of glenoid fossa
@@ -147,7 +161,7 @@ Main = {
     //    Definition of the scapulo thoracic joint. No shoulder rythme.
     AnyRevoluteJoint STJoint = 
     {
-      AnyRefFrame &ground = Main.MyModel.GlobalRef;
+      AnyRefFrame &ground = Main.MyModel.GlobalRef.STcenter;
       AnyRefFrame &Glen = Main.MyModel.Glenoid;
     };
     AnyKinEqSimpleDriver STdriver = 
@@ -180,7 +194,12 @@ Main = {
       Reaction.Type = {Off, Off};
     };
     
+    
+   
+    
     //     Define springs in the shoulder, simulating the effect of passive elements
+      
+      
     AnyForce ShoulderPE = {   
       AnyKinPLine pline = 
       {
@@ -191,9 +210,13 @@ Main = {
           RGB = {0,1,0};
         };
       };
-      F = {-1000*(pline.Pos[0]-0.05)};
-      
+//      F = {-1000*Main.MyModel.gh.Pos[1]};
+//F = {-500*(pline.Pos[0]-0.05)};
+      F = {iffun(gtfun (0, Main.MyModel.gh.Pos[1]), -1000*(pline.Pos[0]), -1000*(pline.Pos[0]))} ;     
     };
+    
+    
+    
     
     // Shoulder driver- abduction.
     AnyKinEqSimpleDriver ShoulderDriver = {
