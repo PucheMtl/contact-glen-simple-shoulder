@@ -1,0 +1,123 @@
+// Todo: Write a small description of your model here
+
+Main = {
+
+  // The actual body model goes in this folder
+  AnyFolder MyModel = {
+    
+    AnyVar rg = 0.1;
+    AnyVar rh = 0.05;
+
+    // Global Reference Frame
+    AnyFixedRefFrame GlobalRef = {
+      
+      AnyRefNode SpringAnchor = {
+        sRel = {0, -0.3, 0};
+      };
+      
+      AnyRefNode GHcenter = {
+        sRel = {..rg, 0, 0};
+        AnySurfSphere Glenoid = {
+//          sRel = {0.0, 0.0, 0.0};
+          //ARel = {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}};
+          viewSurface = {
+            Visible = On;
+            Opacity = 0.5;
+            Pickable = On;
+            PickableZOrdering = 0;
+            RGB = {0.65, 0.0, 0.0};
+            ScaleXYZ = {1.0, 1.0, 1.0};
+            Face = 2.0;
+          };
+          Radius = ...rg;
+        };
+      };      
+    };
+    
+    AnySeg Humerus = {
+      Mass = 1.0;
+      Jii = {1,0.1,1}*0.01;
+      r0 = {.rh, 0.0, 0.0};
+      AnySurfSphere Humhead = {
+        //ARel = {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}};
+        viewSurface = {
+          Visible = On;
+          Opacity = 0.5;
+          Pickable = On;
+          PickableZOrdering = 0;
+          RGB = {0.0, 0.0, 0.65};
+          ScaleXYZ = {1.0, 1.0, 1.0};
+          Face = 2.0;
+        };
+        Radius = ..rh;
+      };
+    };
+
+    // FDK driver to represent the two possible movements of the humeral head
+    AnyKinEqSimpleDriver gh = {
+      AnyKinLinear lin = {
+        AnyRefFrame &g = Main.MyModel.GlobalRef.GHcenter;
+        AnyRefFrame &ins = Main.MyModel.Humerus;
+      };
+      MeasureOrganizer = {1,2};
+      DriverPos = {0,0};
+      DriverVel = {0,0};
+      CType = {ForceDep, ForceDep};
+      Reaction.Type = {Off, Off};
+    };
+    
+//    AnySphericalJoint gh = {
+//      AnyRefFrame &g = Main.MyModel.GlobalRef.GHcenter;
+//      AnyRefFrame &ins = Main.MyModel.Humerus;
+//      Constraints.CType = {ForceDep, ForceDep, ForceDep};
+//      Constraints.Reaction.Type = {Off, Off, Off};
+//    };
+
+    // GH joint defined as a length constraint on a pline through both centers
+    AnyKinEqSimpleDriver GHjoint = {
+      AnyKinPLine pline = {
+        AnyRefFrame &ori = Main.MyModel.GlobalRef.GHcenter;
+        AnyRefFrame &ins = Main.MyModel.Humerus;
+      };
+      DriverPos = {.rg - .rh};
+      DriverVel = {0.0};
+    };
+    
+    AnyKinEqSimpleDriver ShoulderAngle = {
+      AnyKinRotational rot = {
+        AnyRefFrame &ori = Main.MyModel.GlobalRef.GHcenter;
+        AnyRefFrame &ins = Main.MyModel.Humerus;
+        Type = RotVector;
+      };
+      DriverPos = {0.0, 0.0, 0.0};
+      DriverVel = {0.0, 0.0, 0.0};
+    }; 
+
+    // Spring force to stabilize
+    AnyForce Fspring = {
+      AnyKinPLine pline = {
+        AnyRefFrame &ori = Main.MyModel.GlobalRef.SpringAnchor;
+        AnyRefFrame &ins = Main.MyModel.Humerus;
+        AnyDrawPLine drw = {
+          Thickness = 0.005;
+          RGB = {0,1,0};
+        };
+      };
+      F = {-1000*(pline.Pos[0]-0.05)};
+    };
+
+    AnyForce3D AppliedForce = {
+      AnyRefFrame &hum = Main.MyModel.Humerus;
+      F = {0.0, 1000.0, 0.0}*t;
+    };
+    
+  };
+  
+  // The study: Operations to be performed on the model
+  AnyBodyStudy MyStudy = {
+    AnyFolder &Model = .MyModel;
+    Gravity = {0.0, -9.81, 0.0};
+    InverseDynamics.ForceDepKinOnOff=On;
+  };
+
+};
